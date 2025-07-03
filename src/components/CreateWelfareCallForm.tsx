@@ -16,7 +16,7 @@ export const CreateWelfareCallForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [serviceUsers, setServiceUsers] = useState<ServiceUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [message, setMessage] = useState('Hola, esta es una llamada de verificación de bienestar. Por favor presiona 1 si te encuentras bien, o permanece en la línea si necesitas asistencia.');
+  const [message, setMessage] = useState('Hello, this is a welfare check call. Please press 1 if you are doing well, or stay on the line if you need assistance.');
 
   useEffect(() => {
     loadServiceUsers();
@@ -107,17 +107,17 @@ export const CreateWelfareCallForm = () => {
       console.log('Call initiated successfully:', callResponse);
 
       toast({
-        title: "Llamada Iniciada",
-        description: "La llamada de bienestar ha sido iniciada correctamente.",
+        title: "Call Initiated",
+        description: "The welfare call has been initiated successfully.",
       });
 
       setSelectedUserId('');
-      setMessage('Hola, esta es una llamada de verificación de bienestar. Por favor presiona 1 si te encuentras bien, o permanece en la línea si necesitas asistencia.');
+      setMessage('Hello, this is a welfare check call. Please press 1 if you are doing well, or stay on the line if you need assistance.');
     } catch (error) {
       console.error('Error creating welfare call:', error);
       toast({
         title: "Error",
-        description: "No se pudo iniciar la llamada de bienestar. Por favor verifica la configuración de Vapi.",
+        description: "Could not initiate welfare call. Please check Vapi configuration.",
         variant: "destructive",
       });
     } finally {
@@ -129,7 +129,7 @@ export const CreateWelfareCallForm = () => {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600 mb-4">
-          No se encontraron usuarios de servicio. Por favor añade un usuario de servicio primero.
+          No service users found. Please add a service user first.
         </p>
       </div>
     );
@@ -138,10 +138,10 @@ export const CreateWelfareCallForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="service-user">Usuario de Servicio</Label>
+        <Label htmlFor="service-user">Service User</Label>
         <Select value={selectedUserId} onValueChange={setSelectedUserId} required>
           <SelectTrigger>
-            <SelectValue placeholder="Selecciona un usuario de servicio" />
+            <SelectValue placeholder="Select a service user" />
           </SelectTrigger>
           <SelectContent>
             {serviceUsers.map((user) => (
@@ -154,10 +154,10 @@ export const CreateWelfareCallForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message">Mensaje de Verificación de Bienestar</Label>
+        <Label htmlFor="message">Welfare Check Message</Label>
         <Textarea
           id="message"
-          placeholder="Ingresa el mensaje para la llamada de bienestar"
+          placeholder="Enter the message for the welfare call"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
@@ -166,7 +166,7 @@ export const CreateWelfareCallForm = () => {
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Iniciando Llamada...' : 'Crear Llamada de Bienestar'}
+        {isLoading ? 'Initiating Call...' : 'Create Welfare Call'}
       </Button>
     </form>
   );

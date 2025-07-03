@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Phone, Users, Settings, LogOut } from 'lucide-react';
+import { Phone, Users, Settings, LogOut, BarChart } from 'lucide-react';
 import { CreateWelfareCallForm } from '@/components/CreateWelfareCallForm';
 import { WelfareCallsList } from '@/components/WelfareCallsList';
 import { ServiceUsersList } from '@/components/ServiceUsersList';
 import { CreateServiceUserForm } from '@/components/CreateServiceUserForm';
+import { DashboardCharts } from '@/components/DashboardCharts';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -60,8 +61,12 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="calls" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
+            <TabsTrigger value="dashboard" className="flex items-center space-x-2">
+              <BarChart className="h-4 w-4" />
+              <span>Dashboard</span>
+            </TabsTrigger>
             <TabsTrigger value="calls" className="flex items-center space-x-2">
               <Phone className="h-4 w-4" />
               <span>Calls</span>
@@ -75,6 +80,14 @@ const Dashboard = () => {
               <span>Settings</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Analytics Dashboard</h2>
+              <p className="text-gray-600">Monitor your welfare call performance and statistics</p>
+            </div>
+            <DashboardCharts />
+          </TabsContent>
 
           <TabsContent value="calls" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

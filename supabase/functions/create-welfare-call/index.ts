@@ -24,8 +24,26 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const vapiApiKey = Deno.env.get("VAPI_API_KEY")!;
-    const vapiAssistantId = Deno.env.get("VAPI_ASSISTANT_ID")!;
+    const vapiApiKey = Deno.env.get("VAPI_API_KEY");
+    const vapiAssistantId = Deno.env.get("VAPI_ASSISTANT_ID");
+    
+    console.log("Environment check:", {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseServiceKey,
+      hasVapiKey: !!vapiApiKey,
+      hasVapiAssistant: !!vapiAssistantId
+    });
+
+    if (!vapiApiKey || !vapiAssistantId) {
+      console.error("Missing Vapi credentials");
+      return new Response(
+        JSON.stringify({ error: "Vapi credentials not configured" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -47,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
           name: serviceUserName,
         },
         assistantOverrides: {
-          firstMessage: `Hola ${serviceUserName}, ${message}`,
+          firstMessage: `Hello ${serviceUserName}, ${message}`,
         },
       }),
     });
@@ -55,7 +73,23 @@ const handler = async (req: Request): Promise<Response> => {
     if (!vapiResponse.ok) {
       const errorText = await vapiResponse.text();
       console.error("Vapi API error:", vapiResponse.status, errorText);
-      throw new Error(`Vapi API error: ${vapiResponse.status} - ${errorText}`);
+      
+      // Update welfare call status to failed
+      await supabase
+        .from('welfare_calls')
+        .update({
+          status: 'failed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', welfareCallId);
+
+      return new Response(
+        JSON.stringify({ error: `Vapi API error: ${vapiResponse.status} - ${errorText}` }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
     }
 
     const vapiData = await vapiResponse.json();
