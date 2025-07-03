@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { WelfareCall } from '@/domain/entities/WelfareCall';
 import { WelfareCallRepository } from '@/domain/repositories/WelfareCallRepository';
@@ -29,7 +28,7 @@ export class SupabaseWelfareCallRepository implements WelfareCallRepository {
       message: data.message,
       phoneNumber: data.phone_number,
       serviceUserName: data.service_user_name,
-      status: data.status as 'pending' | 'in-progress' | 'completed' | 'failed',
+      status: data.status as 'pending' | 'initialized' | 'failed',
       callId: data.call_id,
       callResponse: data.call_response,
       createdAt: data.created_at,
@@ -53,7 +52,7 @@ export class SupabaseWelfareCallRepository implements WelfareCallRepository {
       message: item.message,
       phoneNumber: item.phone_number,
       serviceUserName: item.service_user_name,
-      status: item.status as 'pending' | 'in-progress' | 'completed' | 'failed',
+      status: item.status as 'pending' | 'initialized' | 'failed',
       callId: item.call_id,
       callResponse: item.call_response,
       createdAt: item.created_at,
@@ -77,7 +76,7 @@ export class SupabaseWelfareCallRepository implements WelfareCallRepository {
       message: data.message,
       phoneNumber: data.phone_number,
       serviceUserName: data.service_user_name,
-      status: data.status as 'pending' | 'in-progress' | 'completed' | 'failed',
+      status: data.status as 'pending' | 'initialized' | 'failed',
       callId: data.call_id,
       callResponse: data.call_response,
       createdAt: data.created_at,
@@ -106,7 +105,7 @@ export class SupabaseWelfareCallRepository implements WelfareCallRepository {
       message: data.message,
       phoneNumber: data.phone_number,
       serviceUserName: data.service_user_name,
-      status: data.status as 'pending' | 'in-progress' | 'completed' | 'failed',
+      status: data.status as 'pending' | 'initialized' | 'failed',
       callId: data.call_id,
       callResponse: data.call_response,
       createdAt: data.created_at,
