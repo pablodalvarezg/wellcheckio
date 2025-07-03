@@ -9,7 +9,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      service_users: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          phone_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          phone_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          phone_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      welfare_calls: {
+        Row: {
+          call_id: string | null
+          call_response: Json | null
+          created_at: string
+          id: string
+          message: string
+          phone_number: string
+          service_user_id: string
+          service_user_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          call_id?: string | null
+          call_response?: Json | null
+          created_at?: string
+          id?: string
+          message: string
+          phone_number: string
+          service_user_id: string
+          service_user_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          call_id?: string | null
+          call_response?: Json | null
+          created_at?: string
+          id?: string
+          message?: string
+          phone_number?: string
+          service_user_id?: string
+          service_user_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "welfare_calls_service_user_id_fkey"
+            columns: ["service_user_id"]
+            isOneToOne: false
+            referencedRelation: "service_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
