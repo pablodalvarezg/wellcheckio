@@ -50,7 +50,29 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { welfareCallId, phoneNumber, serviceUserName, message }: VapiCallRequest = await req.json();
 
-    console.log("Creating welfare call:", { welfareCallId, phoneNumber, serviceUserName });
+    // Asegurarse de que el número de teléfono tenga el formato correcto
+    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+    
+    // Remover espacios y caracteres especiales del número
+    const cleanPhone = formattedPhone.replace(/\s+/g, '').replace(/[-()]/g, '');
+
+    console.log("Creating welfare call:", { 
+      welfareCallId, 
+      phoneNumber: cleanPhone,
+      serviceUserName,
+      assistantId: vapiAssistantId
+    });
+
+    const requestBody = {
+      assistantId: vapiAssistantId,
+      customer: {
+        phoneNumber: cleanPhone,  // Usar el número limpio aquí
+        name: serviceUserName,
+      },
+      firstMessage: `Hello ${serviceUserName}, ${message}`,
+    };
+
+    console.log("Vapi request body:", JSON.stringify(requestBody, null, 2));
 
     // Make the call to Vapi
     const vapiResponse = await fetch("https://api.vapi.ai/call", {
@@ -59,33 +81,45 @@ const handler = async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${vapiApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        assistantId: vapiAssistantId,
-        customer: {
-          number: phoneNumber,
-          name: serviceUserName,
-        },
-        assistantOverrides: {
-          firstMessage: `Hello ${serviceUserName}, ${message}`,
-        },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
+    // Capturar el texto completo de la respuesta antes de procesarla
+    const responseText = await vapiResponse.text();
+    console.log("Raw Vapi response:", responseText);
+
+    let vapiData;
+    try {
+      vapiData = JSON.parse(responseText);
+      console.log("Parsed Vapi response:", vapiData);
+    } catch (e) {
+      console.error("Failed to parse Vapi response:", responseText);
+      throw new Error(`Invalid JSON response from Vapi: ${responseText}`);
+    }
+
     if (!vapiResponse.ok) {
-      const errorText = await vapiResponse.text();
-      console.error("Vapi API error:", vapiResponse.status, errorText);
+      console.error("Vapi API error:", {
+        status: vapiResponse.status,
+        response: responseText,
+        requestBody
+      });
       
       // Update welfare call status to failed
       await supabase
         .from('welfare_calls')
         .update({
           status: 'failed',
+          error_details: `Vapi API error: ${vapiResponse.status} - ${responseText}`,
           updated_at: new Date().toISOString(),
         })
         .eq('id', welfareCallId);
 
       return new Response(
-        JSON.stringify({ error: `Vapi API error: ${vapiResponse.status} - ${errorText}` }),
+        JSON.stringify({ 
+          error: "Failed to initiate call with Vapi",
+          details: responseText,
+          requestSent: requestBody
+        }),
         {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -93,8 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const vapiData = await vapiResponse.json();
-    console.log("Vapi call response:", vapiData);
+    console.log("Vapi call created successfully:", vapiData);
 
     // Update the welfare call with the Vapi call ID and status
     const { data: updatedCall, error: updateError } = await supabase
@@ -102,6 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
       .update({
         status: 'in-progress',
         call_id: vapiData.id,
+        provider_data: vapiData, // Guardamos toda la respuesta de Vapi para referencia
         updated_at: new Date().toISOString(),
       })
       .eq('id', welfareCallId)
@@ -129,7 +163,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error("Error in create-welfare-call handler:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ 
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error"
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
