@@ -1,7 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+
+// Obtener la URL base de la variable de entorno o usar window.location.origin como fallback
+const BASE_URL = import.meta.env.VITE_AUTH_REDIRECT_URL || window.location.origin;
 
 interface AuthContextType {
   user: User | null;
@@ -48,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${BASE_URL}/`;
     
     const { error } = await supabase.auth.signUp({
       email,
