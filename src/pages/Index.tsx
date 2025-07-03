@@ -36,7 +36,7 @@ const Index = () => {
             <Phone className="h-16 w-16 text-blue-600" />
           </div>
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Welfare Check Platform
+            Wellcheck.io
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             AI-powered voice platform for automated welfare check-ins. 

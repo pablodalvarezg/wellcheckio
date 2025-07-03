@@ -38,7 +38,7 @@ const Dashboard = () => {
             <div className="flex items-center space-x-4">
               <Phone className="h-8 w-8 text-blue-600" />
               <h1 className="text-2xl font-bold text-gray-900">
-                Welfare Check Platform
+                Wellcheck.io
               </h1>
             </div>
             <div className="flex items-center space-x-4">

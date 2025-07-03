@@ -84,7 +84,7 @@ const Auth = () => {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Welfare Check Platform
+              Wellcheck.io
             </CardTitle>
             <CardDescription>
               Secure access to your welfare call management system
