@@ -102,7 +102,7 @@ const handler = async (req)=>{
     console.log("Vapi call created successfully:", vapiData);
     // Update the welfare call with the Vapi call ID and status
     const { data: updatedCall, error: updateError } = await supabase.from('welfare_calls').update({
-      status: 'in-progress',
+      status: 'initialized',
       call_id: vapiData.id,
       provider_data: vapiData,
       updated_at: new Date().toISOString()

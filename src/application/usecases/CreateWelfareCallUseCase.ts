@@ -1,4 +1,3 @@
-
 import { WelfareCallRepository } from '@/domain/repositories/WelfareCallRepository';
 import { ServiceUserRepository } from '@/domain/repositories/ServiceUserRepository';
 import { VoiceService } from '@/domain/services/VoiceService';
@@ -41,7 +40,7 @@ export class CreateWelfareCallUseCase {
 
       // Update welfare call with voice response
       const updatedCall = await this.welfareCallRepository.update(welfareCall.id, {
-        status: 'in-progress',
+        status: 'initialized',
         callId: voiceResponse.callId,
       });
 

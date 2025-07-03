@@ -1,4 +1,3 @@
-
 export interface WelfareCall {
   id: string;
   userId: string;
@@ -6,7 +5,7 @@ export interface WelfareCall {
   message: string;
   phoneNumber: string;
   serviceUserName: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  status: 'pending' | 'initialized' | 'failed';
   callId?: string;
   callResponse?: any;
   createdAt: string;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,21 +7,19 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, startOfDay, endOfDay } from 'date-fns';
 
 interface CallStats {
-  completed: number;
-  'in-progress': number;
+  initialized: number;
   failed: number;
 }
 
 const COLORS = {
-  completed: '#22c55e',
-  'in-progress': '#eab308', 
+  initialized: '#22c55e',
   failed: '#ef4444'
 };
 
 export const DashboardCharts = () => {
   const { user } = useAuth();
-  const [todayStats, setTodayStats] = useState<CallStats>({ completed: 0, 'in-progress': 0, failed: 0 });
-  const [overallStats, setOverallStats] = useState<CallStats>({ completed: 0, 'in-progress': 0, failed: 0 });
+  const [todayStats, setTodayStats] = useState<CallStats>({ initialized: 0, failed: 0 });
+  const [overallStats, setOverallStats] = useState<CallStats>({ initialized: 0, failed: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -62,14 +59,14 @@ export const DashboardCharts = () => {
         const status = call.status as keyof CallStats;
         acc[status] = (acc[status] || 0) + 1;
         return acc;
-      }, { completed: 0, 'in-progress': 0, failed: 0 } as CallStats);
+      }, { initialized: 0, failed: 0 } as CallStats);
 
       // Calculate overall stats
       const overallStatsData = allCalls.reduce((acc, call) => {
         const status = call.status as keyof CallStats;
         acc[status] = (acc[status] || 0) + 1;
         return acc;
-      }, { completed: 0, 'in-progress': 0, failed: 0 } as CallStats);
+      }, { initialized: 0, failed: 0 } as CallStats);
 
       setTodayStats(todayStatsData);
       setOverallStats(overallStatsData);
@@ -81,20 +78,17 @@ export const DashboardCharts = () => {
   };
 
   const barChartData = [
-    { name: 'Completed', value: todayStats.completed, fill: COLORS.completed },
-    { name: 'In Progress', value: todayStats['in-progress'], fill: COLORS['in-progress'] },
+    { name: 'Initialized', value: todayStats.initialized, fill: COLORS.initialized },
     { name: 'Failed', value: todayStats.failed, fill: COLORS.failed },
   ];
 
   const pieChartData = [
-    { name: 'Completed', value: overallStats.completed, fill: COLORS.completed },
-    { name: 'In Progress', value: overallStats['in-progress'], fill: COLORS['in-progress'] },
+    { name: 'Initialized', value: overallStats.initialized, fill: COLORS.initialized },
     { name: 'Failed', value: overallStats.failed, fill: COLORS.failed },
   ].filter(item => item.value > 0);
 
   const chartConfig = {
-    completed: { label: "Completed", color: COLORS.completed },
-    'in-progress': { label: "In Progress", color: COLORS['in-progress'] },
+    initialized: { label: "Initialized", color: COLORS.initialized },
     failed: { label: "Failed", color: COLORS.failed },
   };
 

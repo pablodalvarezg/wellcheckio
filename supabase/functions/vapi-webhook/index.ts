@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -43,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data, error } = await supabase
       .from('welfare_calls')
       .update({
-        status: call.status === 'ended' ? 'completed' : call.status,
+        status: call.status === 'ended' ? 'initialized' : call.status,
         call_response: {
           endedReason: call.endedReason,
           transcript: call.transcript,
