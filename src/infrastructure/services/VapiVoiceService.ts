@@ -26,16 +26,19 @@ export class VapiVoiceService implements VoiceService {
             name: request.serviceUserName,
           },
           assistantOverrides: {
-            firstMessage: `Hello ${request.serviceUserName}, ${request.message}`,
+            firstMessage: `Hola ${request.serviceUserName}, ${request.message}`,
           },
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`Vapi API error: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Vapi API error:', response.status, errorText);
+        throw new Error(`Vapi API error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Vapi call initiated:', data);
       
       return {
         callId: data.id,
@@ -44,7 +47,7 @@ export class VapiVoiceService implements VoiceService {
       };
     } catch (error) {
       console.error('Error initiating Vapi call:', error);
-      throw new Error('Failed to initiate voice call');
+      throw new Error(`Failed to initiate voice call: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

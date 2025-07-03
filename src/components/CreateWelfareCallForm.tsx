@@ -8,11 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ServiceUser } from '@/domain/entities/ServiceUser';
-import { SupabaseServiceUserRepository } from '@/infrastructure/repositories/SupabaseServiceUserRepository';
-import { SupabaseWelfareCallRepository } from '@/infrastructure/repositories/SupabaseWelfareCallRepository';
-import { VapiVoiceService } from '@/infrastructure/services/VapiVoiceService';
-import { CreateWelfareCallUseCase } from '@/application/usecases/CreateWelfareCallUseCase';
-import { GetServiceUsersUseCase } from '@/application/usecases/GetServiceUsersUseCase';
+import { supabase } from '@/integrations/supabase/client';
 
 export const CreateWelfareCallForm = () => {
   const { user } = useAuth();
@@ -20,20 +16,7 @@ export const CreateWelfareCallForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [serviceUsers, setServiceUsers] = useState<ServiceUser[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [message, setMessage] = useState('Hi there, this is a welfare check-in call. Please press 1 if you are doing well, or stay on the line if you need assistance.');
-
-  // Dependencies
-  const serviceUserRepository = new SupabaseServiceUserRepository();
-  const welfareCallRepository = new SupabaseWelfareCallRepository();
-  const voiceService = new VapiVoiceService('', ''); // Will be configured with actual credentials
-  
-  const createWelfareCallUseCase = new CreateWelfareCallUseCase(
-    welfareCallRepository,
-    serviceUserRepository,
-    voiceService
-  );
-  
-  const getServiceUsersUseCase = new GetServiceUsersUseCase(serviceUserRepository);
+  const [message, setMessage] = useState('Hola, esta es una llamada de verificación de bienestar. Por favor presiona 1 si te encuentras bien, o permanece en la línea si necesitas asistencia.');
 
   useEffect(() => {
     loadServiceUsers();
@@ -43,7 +26,23 @@ export const CreateWelfareCallForm = () => {
     if (!user) return;
     
     try {
-      const users = await getServiceUsersUseCase.execute(user.id);
+      const { data, error } = await supabase
+        .from('service_users')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const users = data.map(item => ({
+        id: item.id,
+        userId: item.user_id,
+        name: item.name,
+        phoneNumber: item.phone_number,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }));
+
       setServiceUsers(users);
     } catch (error) {
       console.error('Error loading service users:', error);
@@ -62,24 +61,63 @@ export const CreateWelfareCallForm = () => {
     setIsLoading(true);
 
     try {
-      await createWelfareCallUseCase.execute({
-        userId: user.id,
-        serviceUserId: selectedUserId,
-        message: message.trim(),
+      // Get selected service user
+      const selectedUser = serviceUsers.find(u => u.id === selectedUserId);
+      if (!selectedUser) {
+        throw new Error('Service user not found');
+      }
+
+      // Create welfare call record
+      const { data: welfareCall, error: createError } = await supabase
+        .from('welfare_calls')
+        .insert({
+          user_id: user.id,
+          service_user_id: selectedUserId,
+          message: message.trim(),
+          phone_number: selectedUser.phoneNumber,
+          service_user_name: selectedUser.name,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      // Call the edge function to initiate the call with Vapi
+      const { data: callResponse, error: callError } = await supabase.functions.invoke('create-welfare-call', {
+        body: {
+          welfareCallId: welfareCall.id,
+          phoneNumber: selectedUser.phoneNumber,
+          serviceUserName: selectedUser.name,
+          message: message.trim(),
+        },
       });
 
+      if (callError) {
+        console.error('Error initiating call:', callError);
+        // Update status to failed
+        await supabase
+          .from('welfare_calls')
+          .update({ status: 'failed' })
+          .eq('id', welfareCall.id);
+        
+        throw new Error('Failed to initiate call');
+      }
+
+      console.log('Call initiated successfully:', callResponse);
+
       toast({
-        title: "Call Initiated",
-        description: "The welfare call has been successfully initiated.",
+        title: "Llamada Iniciada",
+        description: "La llamada de bienestar ha sido iniciada correctamente.",
       });
 
       setSelectedUserId('');
-      setMessage('Hi there, this is a welfare check-in call. Please press 1 if you are doing well, or stay on the line if you need assistance.');
+      setMessage('Hola, esta es una llamada de verificación de bienestar. Por favor presiona 1 si te encuentras bien, o permanece en la línea si necesitas asistencia.');
     } catch (error) {
       console.error('Error creating welfare call:', error);
       toast({
         title: "Error",
-        description: "Failed to initiate the welfare call. Please check your Vapi configuration.",
+        description: "No se pudo iniciar la llamada de bienestar. Por favor verifica la configuración de Vapi.",
         variant: "destructive",
       });
     } finally {
@@ -91,7 +129,7 @@ export const CreateWelfareCallForm = () => {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600 mb-4">
-          No service users found. Please add a service user first.
+          No se encontraron usuarios de servicio. Por favor añade un usuario de servicio primero.
         </p>
       </div>
     );
@@ -100,10 +138,10 @@ export const CreateWelfareCallForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="service-user">Service User</Label>
+        <Label htmlFor="service-user">Usuario de Servicio</Label>
         <Select value={selectedUserId} onValueChange={setSelectedUserId} required>
           <SelectTrigger>
-            <SelectValue placeholder="Select a service user" />
+            <SelectValue placeholder="Selecciona un usuario de servicio" />
           </SelectTrigger>
           <SelectContent>
             {serviceUsers.map((user) => (
@@ -116,10 +154,10 @@ export const CreateWelfareCallForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="message">Welfare Check Message</Label>
+        <Label htmlFor="message">Mensaje de Verificación de Bienestar</Label>
         <Textarea
           id="message"
-          placeholder="Enter the message for the welfare call"
+          placeholder="Ingresa el mensaje para la llamada de bienestar"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
@@ -128,7 +166,7 @@ export const CreateWelfareCallForm = () => {
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Initiating Call...' : 'Create Welfare Call'}
+        {isLoading ? 'Iniciando Llamada...' : 'Crear Llamada de Bienestar'}
       </Button>
     </form>
   );
